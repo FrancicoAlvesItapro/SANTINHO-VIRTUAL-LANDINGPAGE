@@ -39,9 +39,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Initialize Page Views Counter System
+    // Initialize Page Views Counter System (Footer)
     initPageViewsCounter();
+
+    // Initialize Dynamic Keyword Manager (Header Top Box)
+    initKeywordManager();
 });
+
+/**
+ * Dynamic Keyword Manager (Fetches active keyword from Supabase)
+ */
+async function initKeywordManager() {
+    const keywordTextElem = document.getElementById('keyword-text');
+    if (!keywordTextElem) return;
+
+    const SUPABASE_URL = window.SUPABASE_URL || 'https://lueblrcuerycimfpcvba.supabase.co';
+    const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_ZS-lMiuwtye0pdPCrCWSfg_080MLBxx';
+    const DEFAULT_KEYWORD = 'Conexão Espiritual';
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/keywords?id=eq.header_keyword&select=word`, {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            },
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            const data = await response.json();
+            if (Array.isArray(data) && data.length > 0 && data[0].word) {
+                keywordTextElem.textContent = data[0].word;
+                return;
+            }
+        }
+    } catch (e) {
+        // Fallback silencioso para palavra padrão caso a tabela ainda não tenha sido populada
+    }
+    keywordTextElem.textContent = DEFAULT_KEYWORD;
+}
 
 /**
  * Page Views Counter & Metrics Manager
@@ -51,18 +91,11 @@ function initPageViewsCounter() {
     const STORAGE_KEY_SESSION = 'santinho_session_active_v2';
     const BASE_INITIAL_VIEWS = 0; // Zerado para iniciar a contagem a partir de hoje
 
-    // Limpar chaves antigas de contadores prévios
-    localStorage.removeItem('santinho_total_page_views');
-    sessionStorage.removeItem('santinho_session_active');
-
     // Elements
-    const headerCountElem = document.getElementById('visit-count');
     const footerCountElem = document.getElementById('footer-visit-count');
     const modalTotalViewsElem = document.getElementById('modal-total-views');
-    const modalSessionViewsElem = document.getElementById('modal-session-views');
     const modalOverlay = document.getElementById('views-modal');
     const modalCloseBtn = document.getElementById('views-modal-close');
-    const viewsBadgeBtn = document.getElementById('views-badge');
     const footerViewsBtn = document.getElementById('footer-views-btn');
 
     // 1. Obter total armazenado localmente
@@ -100,7 +133,6 @@ function initPageViewsCounter() {
     function updateDisplays(finalValue) {
         const formattedStr = finalValue.toLocaleString('pt-BR');
         
-        if (headerCountElem) animateCounter(headerCountElem, 0, finalValue, 1500);
         if (footerCountElem) animateCounter(footerCountElem, 0, finalValue, 1500);
         if (modalTotalViewsElem) modalTotalViewsElem.textContent = formattedStr;
     }
@@ -136,7 +168,6 @@ function initPageViewsCounter() {
         if (modalOverlay) modalOverlay.classList.remove('active');
     }
 
-    if (viewsBadgeBtn) viewsBadgeBtn.addEventListener('click', openModal);
     if (footerViewsBtn) footerViewsBtn.addEventListener('click', openModal);
     if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
     
@@ -160,8 +191,8 @@ function initPageViewsCounter() {
  */
 async function syncWithSupabaseCounter(shouldIncrement, localViewsFallback) {
     const SUPABASE_URL = 'https://lueblrcuerycimfpcvba.supabase.co';
-    // Chave anon pública (configurada no window.SUPABASE_ANON_KEY ou fallback público)
-    const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1ZWJscmN1ZXJ5Y2ltZnBjdmJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MjAxNTAwMDAwMH0.public_key_placeholder';
+    // Chave pública publishable do Supabase
+    const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_ZS-lMiuwtye0pdPCrCWSfg_080MLBxx';
     const PAGE_ID = 'santinho_landingpage';
 
     try {

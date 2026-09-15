@@ -36,10 +36,9 @@
                 <a href="#contato" class="nav-link">Fale Conosco</a>
             </nav>
             <div class="header-cta">
-                <div class="views-badge" id="views-badge" title="Clique para ver estatísticas completas">
-                    <i class="fa-solid fa-eye views-icon"></i>
-                    <span id="visit-count" class="views-count">0</span>
-                    <span class="views-label">acessos</span>
+                <div class="keyword-badge" id="keyword-badge" title="Palavra-chave em destaque (configurada no banco de dados)">
+                    <i class="fa-solid fa-key keyword-icon"></i>
+                    <span id="keyword-text" class="keyword-text">Conexão Espiritual</span>
                 </div>
                 <a href="#baixar" class="btn btn-secondary">Baixar App</a>
             </div>
@@ -397,7 +396,11 @@
     </div>
 
     <!-- JavaScript -->
-    <script src="main.js?v=100"></script>
+    <script>
+        window.SUPABASE_URL = 'https://lueblrcuerycimfpcvba.supabase.co';
+        window.SUPABASE_ANON_KEY = 'sb_publishable_ZS-lMiuwtye0pdPCrCWSfg_080MLBxx';
+    </script>
+    <script src="main.js?v=101"></script>
 </body>
 
 </html>

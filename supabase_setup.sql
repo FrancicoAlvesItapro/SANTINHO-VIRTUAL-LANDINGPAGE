@@ -1,5 +1,5 @@
 -- ==========================================================================
--- SQL para criar a tabela e função do Contador Global no Supabase
+-- SQL para criar as tabelas do Contador Global e Palavras-Chave no Supabase
 -- Copie e cole este código no SQL Editor do seu Supabase Dashboard
 -- ==========================================================================
 
@@ -10,16 +10,11 @@ CREATE TABLE IF NOT EXISTS public.page_views (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- Habilitar acesso público de leitura para a tabela (Row Level Security)
+-- Habilitar acesso público para a tabela
 ALTER TABLE public.page_views ENABLE ROW LEVEL SECURITY;
 
--- Política para permitir leitura pública do contador
-CREATE POLICY "Permitir leitura pública" ON public.page_views
-    FOR SELECT USING (true);
-
--- Política para permitir atualização anônima via RPC
-CREATE POLICY "Permitir inserção e atualização pública" ON public.page_views
-    FOR ALL USING (true);
+DROP POLICY IF EXISTS "Permitir leitura e escrita publica" ON public.page_views;
+CREATE POLICY "Permitir leitura e escrita publica" ON public.page_views FOR ALL USING (true) WITH CHECK (true);
 
 -- 2. Inserir registro inicial para a landing page do Santinho Virtual
 INSERT INTO public.page_views (id, count)
@@ -46,3 +41,20 @@ BEGIN
     RETURN new_count;
 END;
 $$;
+
+-- 4. Criar tabela de palavras-chave dinâmicas para a caixa do topo
+CREATE TABLE IF NOT EXISTS public.keywords (
+    id TEXT PRIMARY KEY,
+    word TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+ALTER TABLE public.keywords ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Permitir leitura e escrita publica em keywords" ON public.keywords;
+CREATE POLICY "Permitir leitura e escrita publica em keywords" ON public.keywords FOR ALL USING (true) WITH CHECK (true);
+
+-- Inserir palavra-chave inicial do cabeçalho
+INSERT INTO public.keywords (id, word)
+VALUES ('header_keyword', 'Conexão Espiritual')
+ON CONFLICT (id) DO NOTHING;
