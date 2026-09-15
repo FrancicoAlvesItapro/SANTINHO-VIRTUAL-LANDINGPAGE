@@ -85,15 +85,15 @@ function initPageViewsCounter() {
         localStorage.setItem(STORAGE_KEY_VIEWS, totalViews);
     }
 
-    // 3. Tentar sincronização remota (API Híbrida) com fallback gracioso
-    syncWithRemoteCounter(totalViews).then(remoteViews => {
-        if (remoteViews && remoteViews > totalViews) {
+    // 3. Tentar sincronização remota com Supabase (API Global) com fallback gracioso
+    syncWithSupabaseCounter(isNewSession, totalViews).then(remoteViews => {
+        if (remoteViews && remoteViews > 0) {
             totalViews = remoteViews;
             localStorage.setItem(STORAGE_KEY_VIEWS, totalViews);
             updateDisplays(totalViews);
         }
     }).catch(err => {
-        console.log('Contador operando em modo persistente local.');
+        console.log('Contador operando em modo local/fallback.');
     });
 
     // 4. Animar os números no DOM
@@ -157,27 +157,54 @@ function initPageViewsCounter() {
 }
 
 /**
- * Tenta realizar requisição assíncrona para serviço público de contagem
+ * Sincroniza o contador atômico global no Supabase Database
+ * Endpoint Supabase: https://lueblrcuerycimfpcvba.supabase.co
  */
-async function syncWithRemoteCounter(currentLocalViews) {
+async function syncWithSupabaseCounter(shouldIncrement, localViewsFallback) {
+    const SUPABASE_URL = 'https://lueblrcuerycimfpcvba.supabase.co';
+    // Chave anon pública (configurada no window.SUPABASE_ANON_KEY ou fallback público)
+    const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1ZWJscmN1ZXJ5Y2ltZnBjdmJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MjAxNTAwMDAwMH0.public_key_placeholder';
+    const PAGE_ID = 'santinho_landingpage';
+
     try {
-        // Tenta buscar de serviço de contagem público
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
-        
-        const response = await fetch('https://api.counterapi.dev/v1/santinhovirtual-landingpage/visits/up', {
-            signal: controller.signal
-        });
+        const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        };
+
+        let response;
+        if (shouldIncrement) {
+            // Incrementar via RPC Supabase
+            response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/increment_page_view`, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ page_id: PAGE_ID }),
+                signal: controller.signal
+            });
+        } else {
+            // Apenas consultar a contagem global atual
+            response = await fetch(`${SUPABASE_URL}/rest/v1/page_views?id=eq.${PAGE_ID}&select=count`, {
+                method: 'GET',
+                headers: headers,
+                signal: controller.signal
+            });
+        }
         clearTimeout(timeoutId);
-        
+
         if (response.ok) {
             const data = await response.json();
-            if (data && typeof data.count === 'number') {
-                return data.count;
+            if (typeof data === 'number') {
+                return data; // Retorno do RPC (bigint)
+            } else if (Array.isArray(data) && data.length > 0 && typeof data[0].count === 'number') {
+                return data[0].count; // Retorno da consulta SELECT
             }
         }
     } catch (e) {
-        // Fallback silencioso para contagem local
+        // Fallback silencioso para contagem local se Supabase não responder
     }
-    return currentLocalViews;
+    return localViewsFallback;
 }
