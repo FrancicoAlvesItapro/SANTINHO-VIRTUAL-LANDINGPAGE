@@ -103,7 +103,6 @@ function initPageViewsCounter() {
         if (headerCountElem) animateCounter(headerCountElem, 0, finalValue, 1500);
         if (footerCountElem) animateCounter(footerCountElem, 0, finalValue, 1500);
         if (modalTotalViewsElem) modalTotalViewsElem.textContent = formattedStr;
-        if (modalSessionViewsElem) modalSessionViewsElem.textContent = sessionViews;
     }
 
     updateDisplays(totalViews);
@@ -130,7 +129,6 @@ function initPageViewsCounter() {
     // 6. Manipulação do Modal de Estatísticas
     function openModal() {
         if (modalTotalViewsElem) modalTotalViewsElem.textContent = totalViews.toLocaleString('pt-BR');
-        if (modalSessionViewsElem) modalSessionViewsElem.textContent = sessionViews;
         if (modalOverlay) modalOverlay.classList.add('active');
     }
 
